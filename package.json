@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.1",
     "@web5/api": "0.8.1",
+    "mdb-react-ui-kit": "^7.0.0",
     "next": "13.5.4",
     "react": "^18",
     "react-dom": "^18"
