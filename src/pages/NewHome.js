@@ -1,10 +1,15 @@
 import UserCHatItem from '@/components/UserChatItem';
 import React from 'react';
+import ProfilModal from '@/components/ProfilModal';
 export default function NewHome() {
+
+    const showState = React.useState(false);
+    const show = showState[0];
+    const setShow = showState[1];
 
     return (
         <div className="container mx-auto shadow-lg rounded-lg">
-         
+
             <div className="px-5 py-5 flex justify-between items-center bg-white border-b-2">
                 <div className="font-semibold text-2xl">GoingChat</div>
                 <div className="w-1/2">
@@ -16,16 +21,23 @@ export default function NewHome() {
                         className="rounded-2xl bg-gray-100 py-3 px-5 w-full"
                     />
                 </div>
-                <div
-                    className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center">
-                    RA
-                </div>
+                <button
+                    onClick={() => setShow(!show)}
+                    className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
+                >
+                    Profil
+                </button>
             </div>
 
-            <div className="flex flex-row justify-between bg-white overflow-hidden" style={{height:'85vh'}}>
+            <div className="flex flex-row justify-between bg-white overflow-hidden" style={{ height: '85vh' }}>
                 <div className="flex flex-col w-2/5 border-r-2 overflow-y-auto">
                     <div className="border-b-2 py-4 px-2">
-                        <input type="text" placeholder="search chatting" className="py-2 px-2 border-2 border-gray-200 rounded-2xl w-full"/>
+                        <button type='button' className="flex border-b-2 py-4 px-2" onClick={() => console.log("Button clicked")}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <p className='ml-4'>New chat</p>
+                        </button>
                     </div>
                     <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} />
                     <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} />
@@ -37,7 +49,7 @@ export default function NewHome() {
                     <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} />
                     <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} />
                     <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} />
-               
+
                 </div>
 
                 <div className="w-full px-5 flex flex-col justify-between">
@@ -112,22 +124,9 @@ export default function NewHome() {
                         />
                     </div>
                 </div>
-                <div className="w-2/5 border-l-2 px-5">
-                    <div className="flex flex-col">
-                        <div className="font-semibold text-xl py-4">Mern Stack Group</div>
-                        <img
-                            src="https://source.unsplash.com/L2cxSuKWbpo/600x600"
-                            className="object-cover rounded-xl h-64"
-                            alt=""
-                        />
-                        <div className="font-semibold py-4">Created 22 Sep 2021</div>
-                        <div className="font-light">
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt,
-                            perspiciatis!
-                        </div>
-                    </div>
-                </div>
+
             </div>
+            {show && <ProfilModal setShow={setShow} />}
         </div>
     );
 }
