@@ -1,22 +1,24 @@
 import UserCHatItem from '@/components/UserChatItem';
 import React from 'react';
-import { useState, useEffect } from "react";
+import { useState, useEffect,useMemo } from "react";
 import { Web5 } from "@web5/api";
-import NewChat from '@/components/NewChat';
+import NewChatModal from '@/components/NewChatModal';
 import ProfilModal from '@/components/ProfilModal';
 import NewDID from '@/components/NewDID';
+import Discussion from '@/components/layouts/Discussion/Discussion';
 import { NoChatSelected } from '@/components/NoChatSelected';
 export default function NewHome({ fetchSendMessage }) {
 
-    // const showState = React.useState(false);
-    // const show = showState[0];
-    // const setShow = showState[1];
-    const [showNewChatModal,setShowNewChatModal] = useState(false);
-    const [showProfilModal,setShowProfilModal] = useState(false);
-    const [showMessages, setShowMessages] = React.useState(false);
-    const [showNewDIDModal, setShowNewDIDModal] = React.useState(false);
+  // const showState = React.useState(false);
+  // const show = showState[0];
+  // const setShow = showState[1];
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [showProfilModal, setShowProfilModal] = useState(false);
+  const [showMessages, setShowMessages] = React.useState(false);
+  const [showNewDIDModal, setShowNewDIDModal] = React.useState(false);
+  const [corespondantDIDs, setCorespondantDIDs] = useState([]);
 
-    
+
   const [web5, setWeb5] = useState(null);
   const [myDid, setMyDid] = useState(null);
   const [activeRecipient, setActiveRecipient] = useState(null);
@@ -46,7 +48,6 @@ export default function NewHome({ fetchSendMessage }) {
       const { web5, did } = await Web5.connect();
       setWeb5(web5);
       setMyDid(did);
-
       if (web5 && did) {
         await configureProtocol(web5, did);
         await fetchDings(web5, did);
@@ -166,7 +167,7 @@ export default function NewHome({ fetchSendMessage }) {
     const { status } = await sendRecord(record);
 
     console.log("Send record status", status);
-  
+
     await fetchDings(web5, myDid);
     setNoteValue("");
   };
@@ -177,7 +178,7 @@ export default function NewHome({ fetchSendMessage }) {
         await navigator.clipboard.writeText(myDid);
         setDidCopied(true);
         console.log("DID copied to clipboard");
- 
+
         setTimeout(() => {
           setDidCopied(false);
         }, 3000);
@@ -265,141 +266,87 @@ export default function NewHome({ fetchSendMessage }) {
     }
   };
 
+  // useEffect(() => {
 
-    return (
-        <div className="container mx-auto shadow-lg rounded-lg">
-            <div className="px-5 py-5 flex justify-between items-center bg-white border-b-2">
-                <div className="font-semibold text-2xl">
-                    <button type="button" onClick={() => setShowMessages(false)}   >
-                        Accueil
-                    </button>
-                </div>
-                <div className="w-1/2">
-                    <input
-                        type="text"
-                        name=""
-                        id=""
-                        placeholder="search IRL"
-                        className="rounded-2xl bg-gray-100 py-3 px-5 w-full"
-                    />
-                </div>
-                <button
-                    onClick={() => setShowNewDIDModal(!showNewDIDModal)}
-                    className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
-                >
-                    New DID
-                </button>
-                <button
-                    onClick={() => setShowProfilModal(!showProfilModal)}
-                    className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
-                >
-                    Profil
-                </button>
-            </div>
-            <div className="flex flex-row justify-between bg-white overflow-hidden" style={{ height: '85vh' }}>
-                <div className="flex flex-col w-2/5 border-r-2 overflow-y-auto">
-                    <div className="border-b-2 py-4 px-2">
-                        <button type='button' className="flex border-b-2 py-4 px-2"  onClick={() => setShowNewChatModal(!showNewChatModal)}>
-                        
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            <p  className='ml-4'>New chat</p>
-                            
-                        </button>
-                    </div>
-                    <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
-                    <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)}/>
-                    <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)}/>
-                    <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)}/>
-                    <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)}/>
-                </div>
-                {showMessages && (
-                    <div className="w-full px-5 flex flex-col justify-between">
-                        <div className="flex flex-col mt-5">
-                            <div className="flex justify-end mb-4">
-                                <div
-                                    className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-                                >
-                                    Welcome to group everyone !
-                                </div>
-                                <img
-                                    src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                                    className="object-cover h-8 w-8 rounded-full"
-                                    alt=""
-                                />
-                            </div>
-                            <div className="flex justify-start mb-4">
-                                <img
-                                    src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                                    className="object-cover h-8 w-8 rounded-full"
-                                    alt=""
-                                />
-                                <div
-                                    className="ml-2 py-3 px-4 bg-gray-400 rounded-br-3xl rounded-tr-3xl rounded-tl-xl text-white"
-                                >
-                                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat
-                                    at praesentium, aut ullam delectus odio error sit rem. Architecto
-                                    nulla doloribus laborum illo rem enim dolor odio saepe,
-                                    consequatur quas?
-                                </div>
-                            </div>
-                            <div className="flex justify-end mb-4">
-                                <div>
-                                    <div
-                                        className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-                                    >
-                                        Lorem ipsum dolor, sit amet consectetur adipisicing elit.
-                                        Magnam, repudiandae.
-                                    </div>
+  //   console.log(corespondantDIDs);
+  //   if (web5) {
+  //     fetchReceivedMessages(web5, corespondantDIDs[corespondantDIDs.length - 1]).then(message => {
+  //       console.log("message", message);
+  //     });
+  //   }
 
-                                    <div
-                                        className="mt-4 mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-                                    >
-                                        Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                                        Debitis, reiciendis!
-                                    </div>
-                                </div>
-                                <img
-                                    src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                                    className="object-cover h-8 w-8 rounded-full"
-                                    alt=""
-                                />
-                            </div>
-                            <div className="flex justify-start mb-4">
-                                <img
-                                    src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                                    className="object-cover h-8 w-8 rounded-full"
-                                    alt=""
-                                />
-                                <div
-                                    className="ml-2 py-3 px-4 bg-gray-400 rounded-br-3xl rounded-tr-3xl rounded-tl-xl text-white"
-                                >
-                                    happy holiday guys!
-                                </div>
-                            </div>
-                        </div>
-                        <form onSubmit={handleSubmit} className="py-5">
-                            <input
-                                className="w-full bg-gray-300 py-5 px-3 rounded-xl"
-                                type="text"
-                                placeholder="type your message here..."
-                                
-                            />
-                            <button
-                            type='submit'
-                                className="bg-blue-400 py-3 px-5 rounded-full text-white mt-3 float-right" 
-                                >
-                                    Envoyer
-                                    </button>
-                        </form>
-                    </div>
-                )}
-            </div>
-            {showProfilModal && <ProfilModal setShow={setShowProfilModal} />}
-            {showNewChatModal && <NewChat setShow={setShowNewChatModal} />}
-            {showNewDIDModal && <NewDID setShow={setShowNewDIDModal} />}
+  // }, [corespondantDIDs, web5]);
 
+  const ChatList = useMemo(() => corespondantDIDs.map(thisDID => {
+    return <UserCHatItem key={thisDID} name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} did={thisDID} web5={web5} />
+  }), [corespondantDIDs,web5])
+
+
+
+  return (
+    <div className="container mx-auto shadow-lg rounded-lg">
+      <div className="px-5 py-5 flex justify-between items-center bg-white border-b-2">
+        <div className="font-semibold text-2xl">
+          <button type="button" onClick={() => setShowMessages(false)}   >
+            Accueil
+          </button>
         </div>
-    );
+        <div className="w-1/2">
+          <input
+            type="text"
+            name=""
+            id=""
+            placeholder="search IRL"
+            className="rounded-2xl bg-gray-100 py-3 px-5 w-full"
+          />
+        </div>
+        <button
+          onClick={() => setShowNewDIDModal(!showNewDIDModal)}
+          className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
+        >
+          New DID
+        </button>
+        <button
+          onClick={() => setShowProfilModal(!showProfilModal)}
+          className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
+        >
+          Profil
+        </button>
+      </div>
+      <div className="flex flex-row justify-between bg-white overflow-hidden" style={{ height: '85vh' }}>
+        <div className="flex flex-col w-2/5 border-r-2 overflow-y-auto">
+          <div className="border-b-2 py-4 px-2 flex justify-between px-8">
+            <button type='button' className="flex border-b-2 py-4 px-2" onClick={() => setShowNewChatModal(!showNewChatModal)}>
+
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <p className='ml-4'>New chat</p>
+
+            </button>
+            <button type='button' className="flex border-b-2 py-4 px-2" onClick={() => navigator.clipboard.writeText(myDid)}>
+
+
+              <p className='ml-4'>Copie DID</p>
+
+            </button>
+          </div>
+
+          {ChatList}
+          {/* <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
+          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
+          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
+          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
+          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} /> */}
+        </div>
+        {showMessages && (
+          <Discussion myDid={myDid} />
+        )}
+      </div>
+      {showProfilModal && <ProfilModal setShow={setShowProfilModal} />}
+      {showNewChatModal && <NewChatModal setShow={setShowNewChatModal} submit={(did) => setCorespondantDIDs([...corespondantDIDs, did])} />}
+      {showNewDIDModal && <NewDID setShow={setShowNewDIDModal} />}
+
+    </div>
+  );
 }
