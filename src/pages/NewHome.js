@@ -4,13 +4,18 @@ import { useState, useEffect } from "react";
 import { Web5 } from "@web5/api";
 import NewChat from '@/components/NewChat';
 import ProfilModal from '@/components/ProfilModal';
+import NewDID from '@/components/NewDID';
 import { NoChatSelected } from '@/components/NoChatSelected';
 export default function NewHome({ fetchSendMessage }) {
 
-    const showState = React.useState(false);
-    const show = showState[0];
-    const setShow = showState[1];
+    // const showState = React.useState(false);
+    // const show = showState[0];
+    // const setShow = showState[1];
+    const [showNewChatModal,setShowNewChatModal] = useState(false);
+    const [showProfilModal,setShowProfilModal] = useState(false);
     const [showMessages, setShowMessages] = React.useState(false);
+    const [showNewDIDModal, setShowNewDIDModal] = React.useState(false);
+
     
   const [web5, setWeb5] = useState(null);
   const [myDid, setMyDid] = useState(null);
@@ -279,7 +284,13 @@ export default function NewHome({ fetchSendMessage }) {
                     />
                 </div>
                 <button
-                    onClick={() => setShow(!show)}
+                    onClick={() => setShowNewDIDModal(!showNewDIDModal)}
+                    className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
+                >
+                    New DID
+                </button>
+                <button
+                    onClick={() => setShowProfilModal(!showProfilModal)}
                     className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center"
                 >
                     Profil
@@ -288,7 +299,7 @@ export default function NewHome({ fetchSendMessage }) {
             <div className="flex flex-row justify-between bg-white overflow-hidden" style={{ height: '85vh' }}>
                 <div className="flex flex-col w-2/5 border-r-2 overflow-y-auto">
                     <div className="border-b-2 py-4 px-2">
-                        <button type='button' className="flex border-b-2 py-4 px-2"  onClick={() => setShow(!show)}>
+                        <button type='button' className="flex border-b-2 py-4 px-2"  onClick={() => setShowNewChatModal(!showNewChatModal)}>
                         
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -385,8 +396,10 @@ export default function NewHome({ fetchSendMessage }) {
                     </div>
                 )}
             </div>
-            {show && <ProfilModal setShow={setShow} />}
-            {show && <NewChat setShow={setShow} />}
+            {showProfilModal && <ProfilModal setShow={setShowProfilModal} />}
+            {showNewChatModal && <NewChat setShow={setShowNewChatModal} />}
+            {showNewDIDModal && <NewDID setShow={setShowNewDIDModal} />}
+
         </div>
     );
 }
