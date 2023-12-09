@@ -20,7 +20,7 @@ export function Chat({
               ding.sender === activeRecipient ||
               ding.recipient === activeRecipient
           )
-          .map((ding, index) => (
+          ?.map((ding, index) => (
             <li
               key={index}
               className={

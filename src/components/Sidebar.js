@@ -13,7 +13,7 @@ export function Sidebar({
 }) {
   return (
     <aside>
-      {Object.keys(groupedDings).map((recipient) => (
+      {Object.keys(groupedDings)?.map((recipient) => (
         <div
           key={recipient}
           className={`sidebar-item truncate ${

@@ -19,7 +19,7 @@ export default function UserCHatItem({onClick, name,lastMessage,avatar, did,web5
     
         if (response.status.code === 200) {
           const receivedDings = await Promise.all(
-            response.records.map(async (record) => {
+            response.records?.map(async (record) => {
               const data = await record.data.json();
               return data;
             })
@@ -35,7 +35,7 @@ export default function UserCHatItem({onClick, name,lastMessage,avatar, did,web5
         console.log("I'm in UserCHatItem");
         if(web5){
           fetchReceivedMessages(web5, did).then(meges => {
-            setmessages(meges.map(message=>message.note));
+            setmessages(meges?.map(message=>message.note));
           });
         }
         

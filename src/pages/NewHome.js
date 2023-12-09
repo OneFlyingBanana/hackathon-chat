@@ -3,7 +3,7 @@ import React from 'react';
 import { useState, useEffect,useMemo } from "react";
 import { Web5 } from "@web5/api";
 import NewChatModal from '@/components/NewChatModal';
-import ProfilModal from '@/components/ProfilModal';
+import ProfileModal from '@/components/ProfilModal';
 import NewDID from '@/components/NewDID';
 import Discussion from '@/components/layouts/Discussion/Discussion';
 import { NoChatSelected } from '@/components/NoChatSelected';
@@ -12,11 +12,18 @@ export default function NewHome({ fetchSendMessage }) {
   // const showState = React.useState(false);
   // const show = showState[0];
   // const setShow = showState[1];
+  
+  // modals
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showProfilModal, setShowProfilModal] = useState(false);
   const [showMessages, setShowMessages] = React.useState(false);
   const [showNewDIDModal, setShowNewDIDModal] = React.useState(false);
+
+
+
+  // dids
   const [corespondantDIDs, setCorespondantDIDs] = useState([]);
+  const [selectedCorespondantDID, setSelectedCorespondantDID] = useState(undefined);
 
 
   const [web5, setWeb5] = useState(null);
@@ -26,7 +33,6 @@ export default function NewHome({ fetchSendMessage }) {
   const [noteValue, setNoteValue] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
   const [recipientDid, setRecipientDid] = useState("");
-
   const [didCopied, setDidCopied] = useState(false);
   const [showNewChatInput, setShowNewChatInput] = useState(false);
 
@@ -50,20 +56,20 @@ export default function NewHome({ fetchSendMessage }) {
       setMyDid(did);
       if (web5 && did) {
         await configureProtocol(web5, did);
-        await fetchDings(web5, did);
+        // await fetchDings(web5, did);
       }
     };
     initWeb5();
   }, []);
 
-  useEffect(() => {
-    if (!web5 || !myDid) return;
-    const intervalId = setInterval(async () => {
-      await fetchDings(web5, myDid);
-    }, 2000);
+  // useEffect(() => {
+  //   if (!web5 || !myDid) return;
+  //   const intervalId = setInterval(async () => {
+  //     await fetchDings(web5, myDid);
+  //   }, 2000);
 
-    return () => clearInterval(intervalId);
-  }, [web5, myDid]);
+  //   return () => clearInterval(intervalId);
+  // }, [web5, myDid]);
 
   const createProtocolDefinition = () => {
     const dingerProtocolDefinition = {
@@ -115,12 +121,12 @@ export default function NewHome({ fetchSendMessage }) {
     if (localProtocolStatus.code !== 200 || localProtocol.length === 0) {
 
       const { protocol, status } = await installProtocolLocally(web5, protocolDefinition);
-      console.log("Protocol installed locally", protocol, status);
+      // console.log("Protocol installed locally", protocol, status);
 
       const { status: configureRemoteStatus } = await protocol.send(did);
-      console.log("Did the protocol install on the remote DWN?", configureRemoteStatus);
+      // console.log("Did the protocol install on the remote DWN?", configureRemoteStatus);
     } else {
-      console.log("Protocol already installed");
+      // console.log("Protocol already installed");
     }
   };
 
@@ -189,62 +195,6 @@ export default function NewHome({ fetchSendMessage }) {
   };
 
 
-  const fetchSentMessages = async (web5, did) => {
-    const response = await web5.dwn.records.query({
-      message: {
-        filter: {
-          protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
-        },
-      },
-    });
-    console.log("DINGER CHAT PROTOCOL :", response);
-
-    if (response.status.code === 200) {
-      const sentDings = await Promise.all(
-        response.records.map(async (record) => {
-          const data = await record.data.json();
-          return data;
-        })
-      );
-      console.log(sentDings, "I sent these dings");
-      return sentDings;
-    } else {
-      console.log("error", response.status);
-    }
-  };
-
-  const fetchReceivedMessages = async (web5, did) => {
-    const response = await web5.dwn.records.query({
-      from: did,
-      message: {
-        filter: {
-          protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
-          schema: "https://blackgirlbytes.dev/ding",
-        },
-      },
-    });
-    console.log("MESSAGE : ", response);
-
-    if (response.status.code === 200) {
-      const receivedDings = await Promise.all(
-        response.records.map(async (record) => {
-          const data = await record.data.json();
-          return data;
-        })
-      );
-      console.log(receivedDings, "I received these dings");
-      return receivedDings;
-    } else {
-      console.log("error", response.status);
-    }
-  };
-
-  const fetchDings = async (web5, did) => {
-    const sentMessages = await fetchSentMessages(web5, did);
-    const receivedMessages = await fetchReceivedMessages(web5, did);
-    const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
-    setAllDings(allMessages);
-  };
 
   const handleStartNewChat = () => {
     setActiveRecipient(null);
@@ -266,21 +216,10 @@ export default function NewHome({ fetchSendMessage }) {
     }
   };
 
-  // useEffect(() => {
 
-  //   console.log(corespondantDIDs);
-  //   if (web5) {
-  //     fetchReceivedMessages(web5, corespondantDIDs[corespondantDIDs.length - 1]).then(message => {
-  //       console.log("message", message);
-  //     });
-  //   }
-
-  // }, [corespondantDIDs, web5]);
-
-  const ChatList = useMemo(() => corespondantDIDs.map(thisDID => {
-    return <UserCHatItem key={thisDID} name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} did={thisDID} web5={web5} />
+  const ChatList = useMemo(() => corespondantDIDs?.map(thisDID => {
+    return <UserCHatItem key={thisDID}  name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => {setSelectedCorespondantDID(thisDID); setShowMessages(true)}} did={thisDID} web5={web5} />
   }), [corespondantDIDs,web5])
-
 
 
   return (
@@ -333,17 +272,13 @@ export default function NewHome({ fetchSendMessage }) {
           </div>
 
           {ChatList}
-          {/* <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
-          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
-          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
-          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} />
-          <UserCHatItem name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => setShowMessages(true)} /> */}
+
         </div>
         {showMessages && (
-          <Discussion myDid={myDid} />
+          <Discussion myDid={myDid} correspondantDID={selectedCorespondantDID}  web5={web5}/>
         )}
       </div>
-      {showProfilModal && <ProfilModal setShow={setShowProfilModal} />}
+      {showProfilModal && <ProfileModal setShow={(value ) => setShowProfilModal(value)} myDid={myDid}/>}
       {showNewChatModal && <NewChatModal setShow={setShowNewChatModal} submit={(did) => setCorespondantDIDs([...corespondantDIDs, did])} />}
       {showNewDIDModal && <NewDID setShow={setShowNewDIDModal} />}
 
