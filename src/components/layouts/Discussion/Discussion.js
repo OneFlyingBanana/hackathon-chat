@@ -1,8 +1,46 @@
 import { useEffect, useState } from "react";
+import { discussion } from "./discussion.data.mock";
+import { Discuss } from "react-loader-spinner";
+
+
+
+export const MessageCorrespondant = ({message}) => {
+    return (   <div className="flex justify-start mb-4">
+    <img
+        src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
+        className="object-cover h-8 w-8 rounded-full"
+        alt=""
+    />
+    <div
+        className="ml-2 py-3 px-4 bg-gray-400 rounded-br-3xl rounded-tr-3xl rounded-tl-xl text-white"
+    >
+        {message}
+    </div>
+</div>);
+}
+
+
+export const MyMessage = ({message}) => {
+    return (  <div className="flex justify-end mb-4">
+    <div
+        className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
+    >
+       {message}
+    </div>
+    <img
+        src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
+        className="object-cover h-8 w-8 rounded-full"
+        alt=""
+    />
+</div>);
+}
+
+
 
 export default function Discussion({ web5, myDid, correspondantDID }) {
 
     const [message, setMessage] = useState("");
+    const [conversation, setConversation] = useState([]);
     const constructDing = () => {
         const currentDate = new Date().toLocaleDateString();
         const currentTime = new Date().toLocaleTimeString();
@@ -34,9 +72,11 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
 
     const sendMessage = async () => {
         // console.log("message sent :",message);
+        if(message ==="" || message === undefined) return;
         const ding = constructDing();
         const record = await writeToDwn(ding);
         const { status } = await sendRecord(record);
+        setMessage("");
         console.log("status", status);
     };
 
@@ -92,10 +132,11 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
     };
 
     const fetchDings = async (web5, did) => {
-        // const sentMessages = await fetchSentMessages(web5, myDid);
-        const receivedMessages = await fetchReceivedMessages(web5, myDid);
+        const sentMessages = await fetchSentMessages(web5, myDid);
+        // const receivedMessages = await fetchReceivedMessages(web5, myDid);
         // const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
-        console.log("ALL MESSAGE :", receivedMessages);
+        console.log("ALL MESSAGE :", sentMessages);
+        setConversation([...sentMessages.filter(messsage=>messsage.recipient === correspondantDID)]);
         // setAllDings(allMessages);
     };
 
@@ -110,82 +151,34 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
 
 
     return (
-        <div className="w-full px-5 flex flex-col justify-between">
-            <div className="flex flex-col mt-5">
-                <div className="flex justify-end mb-4">
-                    <div
-                        className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-                    >
-                        Welcome to group everyone !
-                    </div>
-                    <img
-                        src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                        className="object-cover h-8 w-8 rounded-full"
-                        alt=""
-                    />
-                </div>
-                <div className="flex justify-start mb-4">
-                    <img
-                        src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                        className="object-cover h-8 w-8 rounded-full"
-                        alt=""
-                    />
-                    <div
-                        className="ml-2 py-3 px-4 bg-gray-400 rounded-br-3xl rounded-tr-3xl rounded-tl-xl text-white"
-                    >
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat
-                        at praesentium, aut ullam delectus odio error sit rem. Architecto
-                        nulla doloribus laborum illo rem enim dolor odio saepe,
-                        consequatur quas?
-                    </div>
-                </div>
-                <div className="flex justify-end mb-4">
-                    <div>
-                        <div
-                            className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-                        >
-                            Lorem ipsum dolor, sit amet consectetur adipisicing elit.
-                            Magnam, repudiandae.
-                        </div>
-
-                        <div
-                            className="mt-4 mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-                        >
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                            Debitis, reiciendis!
-                        </div>
-                    </div>
-                    <img
-                        src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                        className="object-cover h-8 w-8 rounded-full"
-                        alt=""
-                    />
-                </div>
-                <div className="flex justify-start mb-4">
-                    <img
-                        src="https://source.unsplash.com/vpOeXr5wmR4/600x600"
-                        className="object-cover h-8 w-8 rounded-full"
-                        alt=""
-                    />
-                    <div
-                        className="ml-2 py-3 px-4 bg-gray-400 rounded-br-3xl rounded-tr-3xl rounded-tl-xl text-white"
-                    >
-                        happy holiday guys!
-                    </div>
-                </div>
+        <div className="w-full px-5 flex flex-col justify-between ">
+            <div className="flex flex-col mt-5 overflow-auto">
+                {conversation.length > 0 ? conversation.map(message=>{
+                        if(message.sender === myDid) return <MyMessage message={message.note} />
+                        else return <MessageCorrespondant message={message.note} />
+                }) : <div className="m-auto flex items-center"> <Discuss
+                visible={true}
+                height="150"
+                width="150"
+                ariaLabel="comment-loading"
+                wrapperStyle={{}}
+                wrapperClass="comment-wrapper"
+                colors={["#63b3ed","#63b3ed"]}
+              /></div>}
+             
             </div>
-            <form className="py-5">
+            <form onSubmit={e=>{e.preventDefault(); sendMessage()}} className="py-5">
                 <input
                     className="w-full bg-gray-300 py-5 px-3 rounded-xl"
                     type="text"
+                    value={message}
                     placeholder="type your message here..."
                     onChange={(e) => setMessage(e.target.value)}
 
                 />
                 <button
-                    type='button'
+                    type='submit'
                     className="bg-blue-400 py-3 px-5 rounded-full text-white mt-3 float-right"
-                    onClick={sendMessage}
                 >
                     Envoyer
                 </button>

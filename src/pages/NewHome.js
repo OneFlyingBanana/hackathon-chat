@@ -1,18 +1,19 @@
 import UserCHatItem from '@/components/UserChatItem';
 import React from 'react';
-import { useState, useEffect,useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Web5 } from "@web5/api";
 import NewChatModal from '@/components/NewChatModal';
 import ProfileModal from '@/components/ProfilModal';
 import NewDID from '@/components/NewDID';
 import Discussion from '@/components/layouts/Discussion/Discussion';
 import { NoChatSelected } from '@/components/NoChatSelected';
+import { myMockedDID, myMockedcorrespondantDID } from '@/components/layouts/Discussion/discussion.data.mock';
 export default function NewHome({ fetchSendMessage }) {
 
   // const showState = React.useState(false);
   // const show = showState[0];
   // const setShow = showState[1];
-  
+
   // modals
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showProfilModal, setShowProfilModal] = useState(false);
@@ -22,7 +23,7 @@ export default function NewHome({ fetchSendMessage }) {
 
 
   // dids
-  const [corespondantDIDs, setCorespondantDIDs] = useState([]);
+  const [corespondantDIDs, setCorespondantDIDs] = useState([myMockedcorrespondantDID]);
   const [selectedCorespondantDID, setSelectedCorespondantDID] = useState(undefined);
 
 
@@ -160,6 +161,12 @@ export default function NewHome({ fetchSendMessage }) {
     return await record.send(recipientDid);
   };
 
+  const handleSubmitNewDID = (did) => {
+    const indexDID = corespondantDIDs.find((element) => element === did);
+    if (indexDID === undefined)
+      setCorespondantDIDs([...corespondantDIDs, did])
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('----------------------- send')
@@ -218,8 +225,8 @@ export default function NewHome({ fetchSendMessage }) {
 
 
   const ChatList = useMemo(() => corespondantDIDs?.map(thisDID => {
-    return <UserCHatItem key={thisDID}  name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => {setSelectedCorespondantDID(thisDID); setShowMessages(true)}} did={thisDID} web5={web5} />
-  }), [corespondantDIDs,web5])
+    return <UserCHatItem key={thisDID} name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => { setSelectedCorespondantDID(thisDID); setShowMessages(true) }} did={thisDID} web5={web5} />
+  }), [corespondantDIDs, web5])
 
 
   return (
@@ -274,14 +281,16 @@ export default function NewHome({ fetchSendMessage }) {
           {ChatList}
 
         </div>
-        {showMessages && (
-          <Discussion myDid={myDid} correspondantDID={selectedCorespondantDID}  web5={web5}/>
+        {showMessages && selectedCorespondantDID && (
+          <Discussion myDid={myDid} correspondantDID={selectedCorespondantDID} web5={web5} />
+          // <Discussion myDid={myDid} correspondantDID={selectedCorespondantDID}  web5={web5}/>
         )}
       </div>
-      {showProfilModal && <ProfileModal setShow={(value ) => setShowProfilModal(value)} myDid={myDid}/>}
-      {showNewChatModal && <NewChatModal setShow={setShowNewChatModal} submit={(did) => setCorespondantDIDs([...corespondantDIDs, did])} />}
+      {showProfilModal && <ProfileModal setShow={(value) => setShowProfilModal(value)} myDid={myDid} />}
+      {showNewChatModal && <NewChatModal setShow={setShowNewChatModal} submit={handleSubmitNewDID} />}
       {showNewDIDModal && <NewDID setShow={setShowNewDIDModal} />}
 
     </div>
   );
 }
+
