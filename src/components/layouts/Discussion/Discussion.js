@@ -1,9 +1,10 @@
+// Importation des hooks nécessaires et des données de discussion mockées
 import { useEffect, useState } from "react";
 import { discussion } from "./discussion.data.mock";
 import { Discuss } from "react-loader-spinner";
 
 
-
+// Composant pour afficher les messages du correspondant
 export const MessageCorrespondant = ({message}) => {
     return (   <div className="flex justify-start mb-4">
     <img
@@ -19,7 +20,7 @@ export const MessageCorrespondant = ({message}) => {
 </div>);
 }
 
-
+// Composant pour afficher mes messages
 export const MyMessage = ({message}) => {
     return (  <div className="flex justify-end mb-4">
     <div
@@ -36,11 +37,13 @@ export const MyMessage = ({message}) => {
 }
 
 
-
+// Composant principal pour la discussion
 export default function Discussion({ web5, myDid, correspondantDID }) {
-
-    const [message, setMessage] = useState("");
-    const [conversation, setConversation] = useState([]);
+    
+    const [message, setMessage] = useState(""); // État pour le message actuel
+    const [conversation, setConversation] = useState([]); // État pour la conversation actuelle
+    
+    // Fonction pour construire un "ding" (message)
     const constructDing = () => {
         const currentDate = new Date().toLocaleDateString();
         const currentTime = new Date().toLocaleTimeString();
@@ -53,6 +56,7 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
         return ding;
     };
 
+    // Fonction pour écrire un "ding" dans DWN
     const writeToDwn = async (ding) => {
         const { record } = await web5.dwn.records.write({
             data: ding,
@@ -66,10 +70,12 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
         return record;
     };
 
+    // Fonction pour envoyer un enregistrement
     const sendRecord = async (record) => {
         return await record.send(correspondantDID);
     };
 
+    // Fonction pour envoyer un message
     const sendMessage = async () => {
         // console.log("message sent :",message);
         if(message ==="" || message === undefined) return;
@@ -80,7 +86,9 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
         console.log("status", status);
     };
 
+    // Fonction pour récupérer les messages envoyés
     const fetchSentMessages = async (web5, did) => {
+        // Faire une requête pour obtenir les enregistrements qui correspondent au protocole spécifié
         const response = await web5.dwn.records.query({
             message: {
                 filter: {
@@ -88,23 +96,29 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
                 },
             },
         });
-
+    
+        // Si la requête est réussie (code de statut 200)
         if (response.status.code === 200) {
+             // Parcourir chaque enregistrement, convertir les données en JSON et les stocker dans sentDings
             const sentDings = await Promise.all(
                 response.records?.map(async (record) => {
                     const data = await record.data.json();
                     return data;
                 })
             );
+            // Renvoyer les messages envoyés
             return sentDings;
         } else {
+             // Si la requête échoue, afficher le statut de l'erreur
             console.log("error", response.status);
         }
     };
 
+    // Fonction pour récupérer les messages reçus
     const fetchReceivedMessages = async (web5, did) => {
         console.log("fetchReceivedMessages");
         try {
+             // Faire une requête pour obtenir les enregistrements qui correspondent au protocole et au schéma spécifiés
             const response = await web5.dwn.records.query({
                 from: did,
                 message: {
@@ -114,6 +128,8 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
                     },
                 },
             });
+        // Si la requête est réussie, convertir les données en JSON et les stocker dans receivedDings
+        // (cette partie est commentée pour le moment)
             // console.log(response.records);
             // if (response.status.code === 200) {
             //     const receivedDings = await Promise.all(
@@ -125,38 +141,54 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
             //     return receivedDings;
             // }
         } catch (error) {
+             // Si une erreur se produit, l'afficher dans la console
             console.log("there is an error");
             console.log(error);
         }
        
     };
 
+    // Fonction pour récupérer tous les messages (envoyés et reçus)
     const fetchDings = async (web5, did) => {
+        // Récupérer les messages envoyés
         const sentMessages = await fetchSentMessages(web5, myDid);
+        // Récupérer les messages reçus (cette partie est commentée pour le moment)
         // const receivedMessages = await fetchReceivedMessages(web5, myDid);
+         // Fusionner les messages envoyés et reçus en un seul tableau (cette partie est commentée pour le moment)
         // const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
         console.log("ALL MESSAGE :", sentMessages);
+        // Filtrer les messages pour ne garder que ceux qui ont été envoyés au correspondant actuel
         setConversation([...sentMessages.filter(messsage=>messsage.recipient === correspondantDID)]);
         // setAllDings(allMessages);
     };
 
+    // Utiliser l'effet pour récupérer les messages toutes les 2 secondes
     useEffect(() => {
         if (!web5 || !myDid) return;
         const intervalId = setInterval(async () => {
           await fetchDings(web5, myDid);
         }, 2000);
     
+         // Nettoyer l'intervalle lors du démontage du composant
         return () => clearInterval(intervalId);
       }, [web5, myDid]);
 
 
+    // Rendu du composant
     return (
         <div className="w-full px-5 flex flex-col justify-between ">
             <div className="flex flex-col mt-5 overflow-auto">
-                {conversation.length > 0 ? conversation.map(message=>{
+                {/* Afficher les messages de la conversation */}
+                {conversation.length > 0 ? 
+                // Si la conversation contient des messages, les parcourir et les afficher
+                conversation.map(message=>{
+                      // Si le message a été envoyé par moi, utiliser le composant MyMessage
                         if(message.sender === myDid) return <MyMessage message={message.note} />
+                        // Sinon, utiliser le composant MessageCorrespondant
                         else return <MessageCorrespondant message={message.note} />
-                }) : <div className="m-auto flex items-center"> <Discuss
+                }) : 
+                 // Si la conversation ne contient pas de messages, afficher un spinner de chargement
+                <div className="m-auto flex items-center"> <Discuss
                 visible={true}
                 height="150"
                 width="150"
@@ -167,7 +199,9 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
               /></div>}
              
             </div>
+             {/* Formulaire pour envoyer un message */}
             <form onSubmit={e=>{e.preventDefault(); sendMessage()}} className="py-5">
+                 {/* Champ de texte pour écrire le message */}
                 <input
                     className="w-full bg-gray-300 py-5 px-3 rounded-xl"
                     type="text"
@@ -176,6 +210,7 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
                     onChange={(e) => setMessage(e.target.value)}
 
                 />
+                {/* Bouton pour envoyer le message */}
                 <button
                     type='submit'
                     className="bg-blue-400 py-3 px-5 rounded-full text-white mt-3 float-right"
