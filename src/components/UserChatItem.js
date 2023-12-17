@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 
-
+import  {Pen} from './icons/pen.js';
 export default function UserCHatItem({ onClick, name, lastMessage, avatar, did, web5 }) {
 
   const [messages, setmessages] = useState([]);
-
+  const [editMode, seteditMode] = useState(false);
+  const [localName, setLocalName] = useState(name);
+  const handleEdit = () =>{
+    seteditMode(!editMode);
+  }
   const fetchReceivedMessages = async (web5, did) => {
     const response = await web5.dwn.records.query({
       from: did,
@@ -68,7 +72,7 @@ export default function UserCHatItem({ onClick, name, lastMessage, avatar, did, 
   }, [did, web5]);
 
   return (
-    messages.length ?(
+    // messages.length ?(
     <div onClick={onClick} className="flex flex-row py-4 px-2 justify-center items-center border-b-2">
       <div className="w-1/4">
         <img
@@ -77,10 +81,13 @@ export default function UserCHatItem({ onClick, name, lastMessage, avatar, did, 
           alt=""
         />
       </div>
-      <div className="w-full">
-        <div className="text-lg font-semibold">{name}</div>
-        <span className="text-gray-500">{ messages[messages.length - 1].sender !== did ? `me : ${messages[messages.length - 1].note}` : messages[messages.length - 1].note}</span>
+      <div className="w-full flex">
+{ editMode &&        <input type='text' onChange={(e) => setLocalName(e.target.value)} value={localName}></input>}
+{!editMode && <div className="text-lg font-semibold" >{localName}</div>}
+          <div className='flex justify-end cursor-pointer p-5' style={{width:'100%'}} onClick={handleEdit}><Pen/></div>
       </div>
-    </div>) : null
+      {/* <span className="text-gray-500">{  messages.length && messages[messages.length - 1].sender !== did ? `me : ${messages.length ? messages[messages.length - 1].note : ""}` : (messages.length ? messages[messages.length - 1].note :null)}</span> */}
+
+    </div>
   )
 }

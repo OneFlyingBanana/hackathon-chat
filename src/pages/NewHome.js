@@ -23,7 +23,7 @@ export default function NewHome({ fetchSendMessage }) {
 
 
   // dids
-  const [corespondantDIDs, setCorespondantDIDs] = useState([myMockedcorrespondantDID]);
+  const [corespondantDIDs, setCorespondantDIDs] = useState([]);
   const [selectedCorespondantDID, setSelectedCorespondantDID] = useState(undefined);
 
 
@@ -167,23 +167,6 @@ export default function NewHome({ fetchSendMessage }) {
       setCorespondantDIDs([...corespondantDIDs, did])
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log('----------------------- send')
-    if (!noteValue.trim()) {
-      setErrorMessage('Please type a message before sending.');
-      return;
-    }
-
-    const ding = constructDing();
-    const record = await writeToDwn(ding);
-    const { status } = await sendRecord(record);
-
-    console.log("Send record status", status);
-
-    await fetchDings(web5, myDid);
-    setNoteValue("");
-  };
 
   const handleCopyDid = async () => {
     if (myDid) {
@@ -225,9 +208,15 @@ export default function NewHome({ fetchSendMessage }) {
 
 
   const ChatList = useMemo(() => corespondantDIDs?.map(thisDID => {
-    return <UserCHatItem key={thisDID} name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => { setSelectedCorespondantDID(thisDID); setShowMessages(true) }} did={thisDID} web5={web5} />
+    return <UserCHatItem key={thisDID} name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => { setShowMessages(false); setSelectedCorespondantDID(thisDID); setShowMessages(true) }} did={thisDID} web5={web5} />
   }), [corespondantDIDs, web5])
 
+  useEffect(() => {
+    
+    console.log(corespondantDIDs);
+
+  }, [corespondantDIDs])
+  
 
   return (
     <div className="container mx-auto shadow-lg rounded-lg">
@@ -279,7 +268,6 @@ export default function NewHome({ fetchSendMessage }) {
           </div>
 
           {ChatList}
-
         </div>
         {showMessages && selectedCorespondantDID && (
           <Discussion myDid={myDid} correspondantDID={selectedCorespondantDID} web5={web5} />

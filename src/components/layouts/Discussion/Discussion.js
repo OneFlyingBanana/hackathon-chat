@@ -45,13 +45,13 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
 
     // Fonction pour construire un "ding" (message)
     const constructDing = () => {
-        const currentDate = new Date().toLocaleDateString();
-        const currentTime = new Date().toLocaleTimeString();
+        // const currentDate = new Date().toLocaleDateString();
+        // const currentTime = new Date().toLocaleTimeString();
         const ding = {
             sender: myDid,
             note: message,
             recipient: correspondantDID,
-            timestampWritten: `${currentDate} ${currentTime}`,
+            timestampWritten: `${new Date().getTime()}`,
         };
         return ding;
     };
@@ -130,16 +130,16 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
             });
             // Si la requête est réussie, convertir les données en JSON et les stocker dans receivedDings
             // (cette partie est commentée pour le moment)
-            // console.log(response.records);
-            // if (response.status.code === 200) {
-            //     const receivedDings = await Promise.all(
-            //         response.records?.map(async (record) => {
-            //             const data = await record.data.json();
-            //             return data;
-            //         })
-            //     );
-            //     return receivedDings;
-            // }
+            console.log(response.records);
+            if (response.status.code === 200) {
+                const receivedDings = await Promise.all(
+                    response.records?.map(async (record) => {
+                        const data = await record.data.json();
+                        return data;
+                    })
+                );
+                return receivedDings;
+            }
         } catch (error) {
             // Si une erreur se produit, l'afficher dans la console
             console.log("there is an error");
@@ -150,16 +150,12 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
 
     // Fonction pour récupérer tous les messages (envoyés et reçus)
     const fetchDings = async (web5, did) => {
-        // Récupérer les messages envoyés
         const sentMessages = await fetchSentMessages(web5, myDid);
-        // Récupérer les messages reçus (cette partie est commentée pour le moment)
-        // const receivedMessages = await fetchReceivedMessages(web5, myDid);
-        // Fusionner les messages envoyés et reçus en un seul tableau (cette partie est commentée pour le moment)
-        // const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
-        console.log("ALL MESSAGE :", sentMessages);
-        // Filtrer les messages pour ne garder que ceux qui ont été envoyés au correspondant actuel
-        setConversation([...sentMessages.filter(messsage => messsage.recipient === correspondantDID)]);
-        // setAllDings(allMessages);
+        const receivedMessages = await fetchReceivedMessages(web5, myDid);
+        const allMessages = [...sentMessages,...receivedMessages].sort(function(a,b){return parseInt(a.timestampWritten) - parseInt(b.timestampWritten);});
+        console.log("allMessages",allMessages);
+        setConversation(allMessages.filter(messsage => messsage.recipient === correspondantDID || messsage.sender === correspondantDID ));
+
     };
 
     // Utiliser l'effet pour récupérer les messages toutes les 2 secondes
