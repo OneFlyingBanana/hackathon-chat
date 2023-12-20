@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { discussion } from "./discussion.data.mock";
 import { Discuss } from "react-loader-spinner";
+import { HandShake } from "@/pages/newhome.data";
 
 
 // Composant pour afficher les messages du correspondant
@@ -154,7 +155,7 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
         const receivedMessages = await fetchReceivedMessages(web5, myDid);
         const allMessages = [...sentMessages,...receivedMessages].sort(function(a,b){return parseInt(a.timestampWritten) - parseInt(b.timestampWritten);});
         console.log("allMessages",allMessages);
-        setConversation(allMessages.filter(messsage => messsage.recipient === correspondantDID || messsage.sender === correspondantDID ));
+        setConversation(allMessages.filter(message=>message.note !== HandShake.HANDSHAKE_REQUEST && message.note !== HandShake.HANDSHAKE_RESPONSE).filter(messsage => messsage.recipient === correspondantDID || messsage.sender === correspondantDID ));
 
     };
 

@@ -8,11 +8,14 @@ import NewDID from '@/components/NewDID';
 import Discussion from '@/components/layouts/Discussion/Discussion';
 import { NoChatSelected } from '@/components/NoChatSelected';
 import { myMockedDID, myMockedcorrespondantDID } from '@/components/layouts/Discussion/discussion.data.mock';
+
+import { HandShake } from './newhome.data.js';
+
+
+
+
 export default function NewHome({ fetchSendMessage }) {
 
-  // const showState = React.useState(false);
-  // const show = showState[0];
-  // const setShow = showState[1];
 
   // modals
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -25,6 +28,7 @@ export default function NewHome({ fetchSendMessage }) {
   // dids
   const [corespondantDIDs, setCorespondantDIDs] = useState([]);
   const [selectedCorespondantDID, setSelectedCorespondantDID] = useState(undefined);
+  const [DIDInfoMappers, setDIDInfoMappers] = useState({});
 
 
   const [web5, setWeb5] = useState(null);
@@ -63,14 +67,6 @@ export default function NewHome({ fetchSendMessage }) {
     initWeb5();
   }, []);
 
-  // useEffect(() => {
-  //   if (!web5 || !myDid) return;
-  //   const intervalId = setInterval(async () => {
-  //     await fetchDings(web5, myDid);
-  //   }, 2000);
-
-  //   return () => clearInterval(intervalId);
-  // }, [web5, myDid]);
 
   const createProtocolDefinition = () => {
     const dingerProtocolDefinition = {
@@ -118,7 +114,7 @@ export default function NewHome({ fetchSendMessage }) {
 
     const { protocols: localProtocol, status: localProtocolStatus } =
       await queryForProtocol(web5);
-    console.log({ localProtocol, localProtocolStatus });
+    // console.log({ localProtocol, localProtocolStatus });
     if (localProtocolStatus.code !== 200 || localProtocol.length === 0) {
 
       const { protocol, status } = await installProtocolLocally(web5, protocolDefinition);
@@ -132,19 +128,20 @@ export default function NewHome({ fetchSendMessage }) {
   };
 
 
-  const constructDing = () => {
+  const constructDing = (message, myDid, recipientDid) => {
     const currentDate = new Date().toLocaleDateString();
     const currentTime = new Date().toLocaleTimeString();
     const ding = {
       sender: myDid,
-      note: noteValue,
+      note: message,
+      username: localStorage.getItem("username") || "USER NAME",
       recipient: recipientDid,
-      timestampWritten: `${currentDate} ${currentTime}`,
+      timestampWritten: `${new Date().getTime()}`,
     };
     return ding;
   };
 
-  const writeToDwn = async (ding) => {
+  const writeToDwn = async (ding, recipientDid) => {
     const { record } = await web5.dwn.records.write({
       data: ding,
       message: {
@@ -157,66 +154,142 @@ export default function NewHome({ fetchSendMessage }) {
     return record;
   };
 
-  const sendRecord = async (record) => {
+  const sendRecord = async (record, recipientDid) => {
     return await record.send(recipientDid);
   };
 
-  const handleSubmitNewDID = (did) => {
-    const indexDID = corespondantDIDs.find((element) => element === did);
-    if (indexDID === undefined)
-      setCorespondantDIDs([...corespondantDIDs, did])
+  const sendMessage = async (message, myDid, recipientDid) => {
+    // console.log("message sent :",message);
+    if (message === "" || message === undefined) return;
+    const ding = constructDing(message, myDid, recipientDid);
+    const record = await writeToDwn(ding, recipientDid);
+    const { status } = await sendRecord(record, recipientDid);
+    return status;
+  };
+
+  const fetchSentMessages = async (web5, did) => {
+
+    const response = await web5.dwn.records.query({
+      message: {
+        filter: {
+          protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
+        },
+      },
+    });
+
+
+    if (response.status.code === 200) {
+      const sentDings = await Promise.all(
+        response.records?.map(async (record) => {
+          const data = await record.data.json();
+          return data;
+        })
+      );
+      return sentDings;
+    } else {
+      console.log("error", response.status);
+    }
   };
 
 
-  const handleCopyDid = async () => {
-    if (myDid) {
-      try {
-        await navigator.clipboard.writeText(myDid);
-        setDidCopied(true);
-        console.log("DID copied to clipboard");
-
-        setTimeout(() => {
-          setDidCopied(false);
-        }, 3000);
-      } catch (err) {
-        console.log("Failed to copy DID: " + err);
+  const fetchReceivedMessages = async (web5, did) => {
+    try {
+      const response = await web5.dwn.records.query({
+        from: did,
+        message: {
+          filter: {
+            protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
+            schema: "https://blackgirlbytes.dev/ding",
+          },
+        },
+      });
+      console.log(response.records);
+      if (response.status.code === 200) {
+        const receivedDings = await Promise.all(
+          response.records?.map(async (record) => {
+            const data = await record.data.json();
+            return data;
+          })
+        );
+        return receivedDings;
       }
+    } catch (error) {
+      console.log("there is an error");
+      console.log(error);
+    }
+
+  };
+
+
+  const anticipateHandShakesRequest = (receivedMessages) => receivedMessages.find(message => message.note === HandShake.HANDSHAKE_REQUEST && message.recipient === myDid);
+  const anticipateHandShakesResponse = (receivedMessages) => receivedMessages.find(message => message.note === HandShake.HANDSHAKE_RESPONSE && message.recipient === myDid);
+
+  const handleHandShakeRequest = async (handshake, sentMessages) => {
+    console.log("handleHandShake");
+    if (corespondantDIDs.includes(handshake.sender)) return;
+    setCorespondantDIDs([...corespondantDIDs, handshake.sender]);
+    setDIDInfoMappers({ ...DIDInfoMappers, [handshake.sender]: { username: handshake.username } })
+    if (!sentMessages?.some(message => message.note === HandShake.HANDSHAKE_RESPONSE && message.recipient === handshake.sender))
+      await sendMessage(HandShake.HANDSHAKE_RESPONSE, myDid, handshake.sender);
+
+  }
+
+  const handleHandShakeResponse = async (handshake) => {
+    console.log("handleHandShakeResponse",DIDInfoMappers);
+    console.log("corespondantDIDs",corespondantDIDs);
+    if ( corespondantDIDs.length === 0 || !corespondantDIDs.includes(handshake.sender)) setCorespondantDIDs([...corespondantDIDs, handshake.sender]);
+    if(!(handshake.sender in DIDInfoMappers)) setDIDInfoMappers({ ...DIDInfoMappers, [handshake.sender]: { username: handshake.username } })
+  }
+
+
+  const handleHandShakes = async (receivedMessages, sentMessages) => {
+    const handshakeRequest = anticipateHandShakesRequest(receivedMessages);
+    const handshakeResponse = anticipateHandShakesResponse(receivedMessages);
+    console.log("handshakeResponse", handshakeResponse);
+    if (handshakeRequest) await handleHandShakeRequest(handshakeRequest, sentMessages);
+    if (handshakeResponse) await handleHandShakeResponse(handshakeResponse);
+  }
+
+  const fetchDings = async (web5, did) => {
+    const sentMessages = await fetchSentMessages(web5, myDid);
+    const receivedMessages = await fetchReceivedMessages(web5, myDid);
+    const allMessages = [...sentMessages, ...receivedMessages].sort(function (a, b) { return parseInt(a.timestampWritten) - parseInt(b.timestampWritten); });
+    await handleHandShakes(receivedMessages,sentMessages);
+  };
+
+
+
+
+
+
+  useEffect(() => {
+    if (!web5 || !myDid) return;
+    const intervalId = setInterval(async () => {
+      await fetchDings(web5, myDid);
+    }, 2000);
+    return () => clearInterval(intervalId);
+  }, [web5, myDid]);
+
+
+  const handleSubmitNewDID = async (did) => {
+    const indexDID = corespondantDIDs.find((element) => element === did);
+    if (indexDID === undefined) {
+
+      const status = await sendMessage(HandShake.HANDSHAKE_REQUEST, myDid, did);
+      // setCorespondantDIDs([...corespondantDIDs, did])
+
     }
   };
 
-
-
-  const handleStartNewChat = () => {
-    setActiveRecipient(null);
-    setShowNewChatInput(true);
-  };
-
-  const handleSetActiveRecipient = (recipient) => {
-    setRecipientDid(recipient);
-    setActiveRecipient(recipient);
-    setShowNewChatInput(false);
-  };
-
-  const handleConfirmNewChat = () => {
-    setActiveRecipient(recipientDid);
-    setActiveRecipient(recipientDid);
-    setShowNewChatInput(false);
-    if (!groupedDings[recipientDid]) {
-      groupedDings[recipientDid] = [];
-    }
-  };
 
 
   const ChatList = useMemo(() => corespondantDIDs?.map(thisDID => {
-    return <UserCHatItem key={thisDID} name={'Luis1994'} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => { setShowMessages(false); setSelectedCorespondantDID(thisDID); setShowMessages(true) }} did={thisDID} web5={web5} />
-  }), [corespondantDIDs, web5])
+    return <UserCHatItem key={thisDID} name={DIDInfoMappers[thisDID]?.username} avatar={"https://source.unsplash.com/_7LbC5J-jw4/600x600"} lastMessage={"Pick me at 9:00 Am"} onClick={() => { setShowMessages(false); setSelectedCorespondantDID(thisDID); setShowMessages(true) }} did={thisDID} web5={web5} />
+  }), [corespondantDIDs , DIDInfoMappers, web5])
 
-  useEffect(() => {
-    
-    console.log(corespondantDIDs);
 
-  }, [corespondantDIDs])
-  
+
+
 
   return (
     <div className="container mx-auto shadow-lg rounded-lg">

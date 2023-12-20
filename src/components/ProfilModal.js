@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 
 // Définition du composant ProfileModal
 export default function ProfileModal({ myDid, setShow }) {
@@ -6,7 +6,7 @@ export default function ProfileModal({ myDid, setShow }) {
 
   // Définition des états du composant
   const [isNamesEditable, setIsNamesEditable] = useState(false) // État pour savoir si le nom est modifiable
-  const [names, setNames] = useState("Joanna Baranowska") // État pour stocker le nom
+  const [names, setNames] = useState() // État pour stocker le nom
   const [isCopied, setIsCopied] = useState(false) // État pour savoir si le DID a été copié
 
   // Fonction pour gérer l'appui sur la touche Entrée
@@ -24,6 +24,17 @@ export default function ProfileModal({ myDid, setShow }) {
       setIsCopied(false) // Réinitialiser l'état après 2 secondes
     }, 2000)
   }
+
+
+  useEffect(() => {
+    const username = localStorage.getItem("username");
+    if(username) setNames(username);
+  }, [])
+  useEffect(() => {
+    if(names)
+    localStorage.setItem("username",names);
+  }, [names])
+  
 
   return (
     // Création d'un élément de dialogue modale
@@ -64,7 +75,7 @@ export default function ProfileModal({ myDid, setShow }) {
                     ) : (
                       // Affichage du nom avec un gestionnaire de clic pour rendre le nom modifiable
                       <p onClick={() => setIsNamesEditable(true)} className="text-sm text-gray-500">
-                        {names}
+                        {names || "please enter a username !!!"}
                       </p>)
                     }
                   </div>
