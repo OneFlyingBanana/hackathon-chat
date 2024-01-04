@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { discussion } from "./discussion.data.mock";
 import { Discuss } from "react-loader-spinner";
-import { HandShake } from "@/pages/newhome.data";
+import { constructDing, fetchReceivedMessages, fetchSentMessages, sendMessage, writeToDwn } from "@/utils";
+import { HandShake } from "@/enums";
 
 
 // Composant pour afficher les messages du correspondant
@@ -43,115 +44,13 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
 
     const [message, setMessage] = useState(""); // État pour le message actuel
     const [conversation, setConversation] = useState([]); // État pour la conversation actuelle
-
-    // Fonction pour construire un "ding" (message)
-    const constructDing = () => {
-        // const currentDate = new Date().toLocaleDateString();
-        // const currentTime = new Date().toLocaleTimeString();
-        const ding = {
-            sender: myDid,
-            note: message,
-            recipient: correspondantDID,
-            timestampWritten: `${new Date().getTime()}`,
-        };
-        return ding;
-    };
-
-    // Fonction pour écrire un "ding" dans DWN
-    const writeToDwn = async (ding) => {
-        const { record } = await web5.dwn.records.write({
-            data: ding,
-            message: {
-                protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
-                protocolPath: "ding",
-                schema: "https://blackgirlbytes.dev/ding",
-                recipient: correspondantDID,
-            },
-        });
-        return record;
-    };
-
-    // Fonction pour envoyer un enregistrement
-    const sendRecord = async (record) => {
-        return await record.send(correspondantDID);
-    };
-
-    // Fonction pour envoyer un message
-    const sendMessage = async () => {
-        // console.log("message sent :",message);
-        if (message === "" || message === undefined) return;
-        const ding = constructDing();
-        const record = await writeToDwn(ding);
-        const { status } = await sendRecord(record);
-        setMessage("");
-        console.log("status", status);
-    };
-
-    // Fonction pour récupérer les messages envoyés
-    const fetchSentMessages = async (web5, did) => {
-        // Faire une requête pour obtenir les enregistrements qui correspondent au protocole spécifié
-        const response = await web5.dwn.records.query({
-            message: {
-                filter: {
-                    protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
-                },
-            },
-        });
-
-        // Si la requête est réussie (code de statut 200)
-        if (response.status.code === 200) {
-            // Parcourir chaque enregistrement, convertir les données en JSON et les stocker dans sentDings
-            const sentDings = await Promise.all(
-                response.records?.map(async (record) => {
-                    const data = await record.data.json();
-                    return data;
-                })
-            );
-            // Renvoyer les messages envoyés
-            return sentDings;
-        } else {
-            // Si la requête échoue, afficher le statut de l'erreur
-            console.log("error", response.status);
-        }
-    };
-
-    // Fonction pour récupérer les messages reçus
-    const fetchReceivedMessages = async (web5, did) => {
-        console.log("fetchReceivedMessages");
-        try {
-            // Faire une requête pour obtenir les enregistrements qui correspondent au protocole et au schéma spécifiés
-            const response = await web5.dwn.records.query({
-                from: did,
-                message: {
-                    filter: {
-                        protocol: "https://blackgirlbytes.dev/dinger-chat-protocol",
-                        schema: "https://blackgirlbytes.dev/ding",
-                    },
-                },
-            });
-            // Si la requête est réussie, convertir les données en JSON et les stocker dans receivedDings
-            // (cette partie est commentée pour le moment)
-            console.log(response.records);
-            if (response.status.code === 200) {
-                const receivedDings = await Promise.all(
-                    response.records?.map(async (record) => {
-                        const data = await record.data.json();
-                        return data;
-                    })
-                );
-                return receivedDings;
-            }
-        } catch (error) {
-            // Si une erreur se produit, l'afficher dans la console
-            console.log("there is an error");
-            console.log(error);
-        }
-
-    };
+    const  handleSendMessage = async () => {
+        sendMessage(message, myDid, correspondantDID, web5);
+    }
 
     // Fonction pour récupérer tous les messages (envoyés et reçus)
     const fetchDings = async (web5, did) => {
-        const sentMessages = await fetchSentMessages(web5, myDid);
+        const sentMessages = await fetchSentMessages(web5);
         const receivedMessages = await fetchReceivedMessages(web5, myDid);
         const allMessages = [...sentMessages,...receivedMessages].sort(function(a,b){return parseInt(a.timestampWritten) - parseInt(b.timestampWritten);});
         console.log("allMessages",allMessages);
@@ -197,7 +96,7 @@ export default function Discussion({ web5, myDid, correspondantDID }) {
 
             </div>
             {/* Formulaire pour envoyer un message */}
-            <form onSubmit={e => { e.preventDefault(); sendMessage() }} className="py-5">
+            <form onSubmit={e => { e.preventDefault(); handleSendMessage() }} className="py-5">
                 {/* Champ de texte pour écrire le message */}
                 <input
                     className="w-full bg-gray-300 py-5 px-3 rounded-xl"
