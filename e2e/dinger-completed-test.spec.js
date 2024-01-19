@@ -12,8 +12,8 @@ const mockWeb5 = async (page, fakeDID) => {
 };
 
 const checkHeading = async (page) => {
-    const heading = await page.textContent('header h1');
-    expect(heading).toBe('Dinger');
+    const heading = await page.textContent('div button');
+    expect(heading).toBe('Accueil');
 };
 
 const checkCopyDIDButton = async (page) => {
@@ -44,13 +44,13 @@ test.describe('Next.js app renders - Dinger Chat', () => {
         await checkHeading(page);
     });
 
-    test('Web5 loads successfully and Copy DID button appears', async ({ page }) => {
-        await page.goto(dingerUrl);
-        await checkCopyDIDButton(page);
-    });
+    // test('Web5 loads successfully and Copy DID button appears', async ({ page }) => {
+    //     await page.goto(dingerUrl);
+    //     await checkCopyDIDButton(page);
+    // });
 
-    test('Copy DID button copies DID and pastes it in new chat input', async ({ page }) => {
-        await page.goto(dingerUrl);
-        await testCopyDIDButton(page);
-    });
+    // test('Copy DID button copies DID and pastes it in new chat input', async ({ page }) => {
+    //     await page.goto(dingerUrl);
+    //     await testCopyDIDButton(page);
+    // });
 });

@@ -35,7 +35,9 @@ export default function Home() {
 
 
 
-
+  const handleCopyDid = async () =>{
+      navigator.clipboard.writeText(myDid);
+  }
   const anticipateHandShakesRequest = (receivedMessages) => receivedMessages.find(message => message.note === HandShake.HANDSHAKE_REQUEST && message.recipient === myDid);
   const anticipateHandShakesResponse = (receivedMessages) => receivedMessages.find(message => message.note === HandShake.HANDSHAKE_RESPONSE && message.recipient === myDid);
 
@@ -74,7 +76,7 @@ export default function Home() {
 
   useEffect(() => {
     const initWeb5 = async () => {
-      const { web5, did } = await Web5.connect();
+      const { web5, did } =  await Web5.connect();
       setWeb5(web5);
       setMyDid(did);
       if (web5 && did) {
@@ -156,8 +158,7 @@ export default function Home() {
               <p className='ml-4'>New chat</p>
 
             </button>
-            <button type='button' className="flex border-b-2 py-4 px-2" onClick={() => navigator.clipboard.writeText(myDid)}>
-
+            <button type='button' id="copy-did-button" className="flex border-b-2 py-4 px-2" onClick={handleCopyDid}>
 
               <p className='ml-4'>Copie DID</p>
 
